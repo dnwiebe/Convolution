@@ -9,6 +9,9 @@ GET     /count                          controllers.CountController.count
 # An example controller showing how to write asynchronous code
 GET     /message                        controllers.AsyncController.message
 
+GET     /vestibule/index                controllers.VestibuleController.index
+POST    /vestibule/enter                controllers.VestibuleController.enter
+GET     /vestibule/start/*chlg/*vict    controllers.VestibuleController.start(chlg: String, vict: String)
 GET     /games/*gameId/gamescreen       controllers.GameScreenController.index(gameId: String)
 GET     /games/*gameId/move/*col/*row   controllers.GameScreenController.move(gameId: String, col: Int, row: Int)
 

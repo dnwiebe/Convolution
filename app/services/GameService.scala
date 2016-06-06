@@ -1,10 +1,13 @@
 package services
 
+import com.google.inject.Singleton
 import models.ConvolutionBoard
 
 /**
   * Created by dnwiebe on 6/3/16.
   */
+
+@Singleton
 class GameService {
   private var nextId = 1000
   private val data = scala.collection.mutable.Map[String, ConvolutionBoard] ()
