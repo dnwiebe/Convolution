@@ -11,9 +11,11 @@ GET     /message                        controllers.AsyncController.message
 
 GET     /vestibule/index                controllers.VestibuleController.index
 POST    /vestibule/enter                controllers.VestibuleController.enter
-GET     /vestibule/start/*chlg/*vict    controllers.VestibuleController.start(chlg: String, vict: String)
+GET     /games/start/*chlg/*dfdr    controllers.VestibuleController.start(chlgId: Int, dfdrId: Int)
 GET     /games/*gameId/gamescreen       controllers.GameScreenController.index(gameId: String)
 GET     /games/*gameId/move/*col/*row   controllers.GameScreenController.move(gameId: String, col: Int, row: Int)
+
+GET     /vestibule/socket               controllers.VestibuleController.socket
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file                   controllers.Assets.versioned(path="/public", file: Asset)

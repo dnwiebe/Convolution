@@ -33,5 +33,9 @@ class GameScreenController @Inject() extends Controller {
       }
     }
   }
+
+  def start (challenger: Int, victim: Int) = Action {
+    Ok
+  }
 }
 /// Spike
