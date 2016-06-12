@@ -16,24 +16,6 @@ import services.GameService
 class GameScreenController @Inject() extends Controller {
   private val service = new GameService ()
 
-  def index (gameId: String) = Action {
-    val (id, board) = service.newGame (8)
-    val pres = new BoardPresentation (id, board)
-    Ok(views.html.gamescreen(pres))
-  }
-
-  def move (gameId: String, column: Int, row: Int) = Action {
-    service.findGame (gameId) match {
-      case None => NotFound
-      case Some (previous) => {
-        val current = previous.move (column, row)
-        service.updateGame (gameId, current)
-        val pres = new BoardPresentation (gameId, current)
-        Ok (views.html.gamescreen (pres))
-      }
-    }
-  }
-
   def start (challenger: Int, victim: Int) = Action {
     Ok
   }

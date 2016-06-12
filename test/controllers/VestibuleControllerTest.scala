@@ -1,117 +1,52 @@
 package controllers
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import akka.testkit.TestProbe
 import org.scalatest.path
 import org.mockito.Mockito._
 import play.api.test.FakeRequest
 import services.{DisplayPlayer, GameService, VestibuleService}
-import play.api.test._
 import play.api.test.Helpers._
-import play.mvc.Http.RequestBody
+
+import scala.concurrent.{ExecutionContext, Future}
+
 /**
   * Created by dnwiebe on 6/5/16.
   */
 class VestibuleControllerTest extends path.FunSpec {
+  implicit val ec = ExecutionContext.global
+
   describe ("A VestibuleController with mocked services") {
     val vestibuleService = mock (classOf[VestibuleService])
     val gameService = mock (classOf[GameService])
-    val subject = new VestibuleController (vestibuleService, gameService)
+    implicit val system = ActorSystem ()
+    val materializer = ActorMaterializer ()
+    val subject = new VestibuleController (vestibuleService, gameService) (system, materializer)
 
-    describe ("given an empty vestibule") {
-      when (vestibuleService.waitingPlayers ()).thenReturn (Nil)
+    describe ("accessed by a new player") {
+      val result = subject.index ().apply (FakeRequest ())
+      val html = contentAsString (result)
 
-      describe ("visited by a new player") {
-        val result = subject.index ().apply(FakeRequest())
-        val html = contentAsString (result)
-
-        it ("shows no waiting players") {
-          assert (!html.contains ("""class="waiting-player""""))
-        }
-
-        it ("demands the new player's name") {
-          assert (html.contains ("Enter your name"))
-        }
-
-        it ("does not allow the new player to choose an opponent") {
-          assert (!html.contains ("choose an opponent"))
-        }
-
-        describe ("when the player enters a name") {
-          val request = FakeRequest ("POST", "/vestibule/enter").withFormUrlEncodedBody(("name-field", "Buster"))
-          val result = subject.enter ().apply (request)
-          val html = contentAsString (result)
-
-          it ("shows no waiting players") {
-            assert (!html.contains ("""class="waiting-player""""))
-          }
-
-          it ("does not demand the new player's name") {
-            assert (!html.contains ("Enter your name"))
-          }
-
-          it ("does not allow the new player to choose an opponent") {
-            assert (!html.contains ("choose an opponent"))
-          }
-
-          it ("displays the player's name") {
-            assert (html.contains ("Waiting to be chosen by an opponent: Buster"))
-          }
-
-          it ("informs the VestibuleService of the player's arrival") {
-            verify (vestibuleService).playerEntered (DisplayPlayer ("Buster"))
-          }
-        }
+      it ("shows the proper page") {
+        assert (html.contains ("Enter your name"))
       }
     }
 
-    describe ("given a vestibule with players already in it") {
-      when (vestibuleService.waitingPlayers ()).thenReturn (List (
-        DisplayPlayer ("Bill"),
-        DisplayPlayer ("Ted")
-      ))
+    describe ("exited to game start with good ids") {
+      val bill = DisplayPlayer (123, "Bill", 4321L, TestProbe ().ref)
+      val ted = DisplayPlayer (234, "Ted", 4321L, TestProbe ().ref)
+      when (vestibuleService.playerChallenge (123, 234)).thenReturn (Future {(Some (bill), Some (ted))})
 
-      describe ("visited by a new player") {
-        val result = subject.index ().apply(FakeRequest())
-        val html = contentAsString (result)
+      val result = subject.start (123, 234).apply (FakeRequest ())
+      val html = contentAsString (result)
 
-        it ("shows no waiting players") {
-          assert (!html.contains ("""class="waiting-player""""))
-        }
+      it ("shows the proper page") {
+        assert (html.contains ("Waiting for opponent Ted"))
+      }
 
-        it ("demands the new player's name") {
-          assert (html.contains ("Enter your name"))
-        }
-
-        it ("does not allow the new player to choose an opponent") {
-          assert (!html.contains ("choose an opponent"))
-        }
-
-        describe ("when the player enters a name") {
-          val request = FakeRequest ("POST", "/vestibule/enter").withFormUrlEncodedBody(("name-field", "Buster"))
-          val result = subject.enter ().apply (request)
-          val html = contentAsString (result)
-
-          it ("shows waiting players") {
-            assert (html.contains ("""class="waiting-player""""))
-            assert (html.contains ("""Bill"""))
-            assert (html.contains ("""Ted"""))
-          }
-
-          it ("does not demand the new player's name") {
-            assert (!html.contains ("Enter your name"))
-          }
-
-          it ("allows the new player to choose an opponent") {
-            assert (html.contains ("choose an opponent"))
-          }
-
-          it ("displays the player's name") {
-            assert (html.contains ("Waiting to be chosen by an opponent: Buster"))
-          }
-
-          it ("informs the VestibuleService of the player's arrival") {
-            verify (vestibuleService).playerEntered (DisplayPlayer ("Buster"))
-          }
-        }
+      it ("informs game service of entry") {
+        verify (gameService).gameEnter (bill, ted)
       }
     }
   }

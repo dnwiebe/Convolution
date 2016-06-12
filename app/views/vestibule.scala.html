@@ -1,20 +1,20 @@
-@import services.DisplayPlayer
 @()
 
 @main("Convolution Vestibule") {
     <script src="@routes.Assets.versioned("javascripts/Vestibule.js")" type="text/javascript"></script>
+    <script>Vestibule ();</script>
     <div>
         <div id="enter-name-panel">
-            <label for="name-field">Enter your name:</label>
+            <label class="instructions" for="name-field">Enter your name:</label>
             <input id="name-field" name="name-field" type="text"/>
             <input id="enter-name-submit" type="button" value="Wait for Opponent"/>
         </div>
         <div id="player-name-panel">
             <div id="player-name"></div>
-            <div>Wait to be selected by an opponent</div>
+            <div class="instructions">Wait to be selected by an opponent</div>
         </div>
         <div id="wait-list-panel">
-            <div>or choose an opponent from the list below</div>
+            <div class="instructions">or choose an opponent from the list below</div>
             <ul id="wait-list">
             </ul>
         </div>

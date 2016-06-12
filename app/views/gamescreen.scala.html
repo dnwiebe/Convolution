@@ -1,7 +1,10 @@
-@import presentation.BoardPresentation
-@(board: BoardPresentation)
+@import services.DisplayPlayer
+@(mePlayer: DisplayPlayer, himPlayer: DisplayPlayer)
 
 @main("Convolution") {
+    <script src="@routes.Assets.versioned("javascripts/GameScreen.js")" type="text/javascript"></script>
+    <script>GameScreen ();</script>
+    @*
     <div>
         <div id="scores">
             <span id="horizontal-score" class="score">H: @board.horizontalScore</span>
@@ -24,4 +27,6 @@
             </tbody>
         </table>
     </div>
+    *@
+    <div id="waiting-panel" class="instructions">Waiting for opponent @himPlayer.name</div>
 }
