@@ -12,9 +12,9 @@ import scala.concurrent.duration._
   */
 class VestibuleServiceTest extends path.FunSpec {
   implicit val ec = ExecutionContext.global
-  implicit val system = ActorSystem ()
 
   describe ("A VestibuleService with a mocked clock") {
+    implicit val system = ActorSystem ()
     val subject = new VestibuleService ()
     var times = List (1234L, 2345L)
     subject.clock = {() =>
@@ -32,38 +32,35 @@ class VestibuleServiceTest extends path.FunSpec {
     }
 
     describe ("informed of an entering player") {
-      val john = DisplayPlayer (1, "John", 1234L, TestProbe ().ref)
+      val johnRep = TestProbe ()
+      val john = DisplayPlayer (1, "John", 1234L, johnRep.ref)
 
-      val firstId = Await.result (subject.playerEntered (john.name, john.representative), 1 seconds)
+      subject.playerEntered (john.name, johnRep.ref)
 
-      it ("returns the correct ID") {
-        assert (firstId === 1)
-      }
-
-      describe ("and asked about waiting players") {
-        val result = Await.result (subject.waitingPlayers (), 1 seconds)
-
-        it ("finds one") {
-          assert (result.contains (john))
-        }
+      it ("responds correctly to John") {
+        val messages = johnRep.receiveN (2, 1 seconds)
+        assert (messages.head === PlayerAccepted (john))
+        assert (messages.tail.head === WaitList (List (john)))
       }
 
       describe ("and another entering player") {
-        val fernando = DisplayPlayer (2, "Fernando", 2345L, TestProbe ().ref)
+        val fernandoRep = TestProbe ()
+        val fernando = DisplayPlayer (2, "Fernando", 2345L, fernandoRep.ref)
 
-        val secondId = Await.result (subject.playerEntered (fernando.name, fernando.representative), 1 seconds)
+        subject.playerEntered (fernando.name, fernandoRep.ref)
 
-        it ("returns the correct ID") {
-          assert (secondId === 2)
-        }
+        it ("responds correctly to Fernando and John") {
+          val fernandoMessages = fernandoRep.receiveN (2, 1 seconds)
+          val johnMessages = johnRep.receiveN (3, 1 seconds) // skip over first two messages, grab third
 
-        describe ("and asked about waiting players") {
-          val result = Await.result (subject.waitingPlayers (), 1 seconds)
+          assert (fernandoMessages.head === PlayerAccepted (fernando))
+          val fernandoWaitListMessage = fernandoMessages.tail.head.asInstanceOf[WaitList]
+          val fernandoActualPlayers = fernandoWaitListMessage.players.toSet
+          assert (fernandoActualPlayers === Set (john, fernando))
 
-          it ("finds two") {
-            assert (result.contains (john))
-            assert (result.contains (fernando))
-          }
+          val johnWaitListMessage = johnMessages.tail.tail.head.asInstanceOf[WaitList]
+          val johnActualPlayers = johnWaitListMessage.players.toSet
+          assert (johnActualPlayers === Set (john, fernando))
         }
 
         describe ("and instructed to delete one of them") {
@@ -119,5 +116,7 @@ class VestibuleServiceTest extends path.FunSpec {
         }
       }
     }
+
+    system.terminate()
   }
 }

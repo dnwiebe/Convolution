@@ -7,7 +7,7 @@ import play.api.libs.json._
   */
 abstract class Outgoing (opcode: String) {
   def toJson: String = {
-    val jsValue = JsObject (Seq ("opcode" -> JsString (opcode), "data" -> toJsValue))
+    val jsValue = JsObject (Seq ("type" -> JsString (opcode), "data" -> toJsValue))
     jsValue.toString ()
   }
 

@@ -36,7 +36,7 @@ describe ('Given a fake HTML page', function () {
         beforeEach(function () {
             websocket = jasmine.createSpyObj('websocket', ['send', 'replaceEvents']);
             spyOn (Utils, 'websocket').and.returnValue (websocket);
-            subject = Vestibule ();
+            subject = Vestibule ('ws://nowhere.com');
         });
 
         it ('displays the enter-name-panel', function () {
@@ -72,7 +72,7 @@ describe ('Given a fake HTML page', function () {
                     });
 
                     it ('the correct URL is used', function () {
-                        expect (args[0]).toBe ('/vestibule/socket')
+                        expect (args[0]).toBe ('ws://nowhere.com')
                     });
 
                     describe ('among the event handlers provided', function () {
@@ -227,15 +227,22 @@ describe ('Given a fake HTML page', function () {
                             });
                         });
                     });
-                });
 
-                it ('an entry message is sent', function () {
-                    var args = websocket['send'].calls.argsFor (0);
-                    var type = args[0];
-                    var data = args[1];
+                    describe ("the first message sent", function () {
+                        beforeEach (function () {
+                            var openHandler = args[1].open;
+                            openHandler ()
+                        });
 
-                    expect (type).toBe ('enterVestibule');
-                    expect (data).toEqual ({'name': 'Billy'});
+                        it ('is an enterVestibule message', function () {
+                            var args = websocket['send'].calls.argsFor (0);
+                            var type = args[0];
+                            var data = args[1];
+
+                            expect (type).toBe ('enterVestibule');
+                            expect (data).toEqual ({'name': 'Billy'});
+                        });
+                    });
                 });
             });
         });

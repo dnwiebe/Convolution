@@ -41,6 +41,7 @@ Utils = function () {
 
         ws.send = function (type, data) {
             var msg = JSON.stringify ({type: type, data: data});
+console.log ("Sending message: " + msg + "\n");
             try {
                 socket.send(msg);
                 return true;

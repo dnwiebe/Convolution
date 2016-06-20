@@ -33,9 +33,8 @@ class VestibuleService @Inject() (implicit system: ActorSystem) {
     response.map {r => r.players}
   }
 
-  def playerEntered (name: String, representative: ActorRef): Future[Int] = {
-    val response = (actor ? PlayerEnteredReq (name, representative)).mapTo[PlayerEnteredResp]
-    response.map {r => r.id}
+  def playerEntered (name: String, representative: ActorRef) {
+    actor ! PlayerEnteredReq (name, representative)
   }
 
   def playerLeft (id: Int): Unit = {
@@ -47,7 +46,6 @@ class VestibuleService @Inject() (implicit system: ActorSystem) {
   private case class WaitingPlayersReq ()
   private case class WaitingPlayersResp (players: List[DisplayPlayer])
   private case class PlayerEnteredReq (name: String, representative: ActorRef)
-  private case class PlayerEnteredResp (id: Int)
   private case class PlayerLeftReq (id: Int)
 
   object VestibuleActor {
@@ -60,7 +58,7 @@ class VestibuleService @Inject() (implicit system: ActorSystem) {
 
     private var nextId = 1
 
-    private val data = ListBuffer[DisplayPlayer] ()
+    private val players = ListBuffer[DisplayPlayer] ()
 
     def receive = {
       case msg: PlayerChallengeReq => playerChallenge (msg.meId, msg.himId)
@@ -70,21 +68,24 @@ class VestibuleService @Inject() (implicit system: ActorSystem) {
     }
 
     private def playerChallenge (meId: Int, himId: Int): Unit = {
-      val mePlayerOpt = data.find {p => p.id == meId}
-      val himPlayerOpt = data.find {p => p.id == himId}
+      val mePlayerOpt = players.find {p => p.id == meId}
+      val himPlayerOpt = players.find {p => p.id == himId}
       if (mePlayerOpt.isDefined) {removePlayerById (mePlayerOpt.get.id)}
       sender ! PlayerChallengeResp (mePlayerOpt, himPlayerOpt)
     }
 
     private def waitingPlayers (): Unit = {
-      sender ! WaitingPlayersResp (data.toList)
+      sender ! WaitingPlayersResp (players.toList)
     }
 
     private def playerEntered (name: String, representative: ActorRef): Unit = {
       val id = nextId
-      data.append (DisplayPlayer (id, name, clock (), representative))
+      val newPlayer = DisplayPlayer (id, name, clock (), representative)
+      players.append (newPlayer)
       nextId += 1
-      sender ! PlayerEnteredResp (id)
+      representative ! PlayerAccepted (newPlayer)
+      val waitList = WaitList (players.toList)
+      players.foreach {player => player.representative ! waitList}
     }
 
     private def playerLeft (id: Int): Unit = {
@@ -92,7 +93,7 @@ class VestibuleService @Inject() (implicit system: ActorSystem) {
     }
 
     private def removePlayerById (id: Int): Boolean = {
-      val (index, found) = data.foldLeft ((0, false)) {(soFar, elem) =>
+      val (index, found) = players.foldLeft ((0, false)) {(soFar, elem) =>
         soFar match {
           case (idx, true) => (idx, true)
           case (idx, false) if elem.id == id => (idx, true)
@@ -100,7 +101,7 @@ class VestibuleService @Inject() (implicit system: ActorSystem) {
         }
       }
       if (found) {
-        data.remove (index)
+        players.remove (index)
         true
       }
       else {

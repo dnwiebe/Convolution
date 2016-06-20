@@ -1,17 +1,16 @@
 @import services.DisplayPlayer
-@(mePlayer: DisplayPlayer, himPlayer: DisplayPlayer)
+@(mePlayer: DisplayPlayer, himPlayer: DisplayPlayer, absoluteSocketUrl: String)
 
 @main("Convolution") {
     <script src="@routes.Assets.versioned("javascripts/GameScreen.js")" type="text/javascript"></script>
-    <script>GameScreen ();</script>
-    @*
-    <div>
+    <div id="game-panel">
         <div id="scores">
-            <span id="horizontal-score" class="score">H: @board.horizontalScore</span>
-            <span id="vertical-score" class="score">V: @board.verticalScore</span>
+            <span id="horizontal-score" class="score"></span>
+            <span id="vertical-score" class="score"></span>
         </div>
         <table>
             <tbody>
+                @*
                 @for(rowIdx <- 0 until board.order) {
                     <tr>
                         @for(colIdx <- 0 until board.order) {
@@ -24,9 +23,10 @@
                         }
                     </tr>
                 }
+                *@
             </tbody>
         </table>
     </div>
-    *@
     <div id="waiting-panel" class="instructions">Waiting for opponent @himPlayer.name</div>
+    <script>GameScreen ('@absoluteSocketUrl');</script>
 }

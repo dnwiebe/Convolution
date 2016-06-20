@@ -20,7 +20,7 @@ object Incoming {
 
   def apply (jsValue: JsValue): Option[Incoming] = {
     try {
-      val opcode = (jsValue \ "opcode").as[String]
+      val opcode = (jsValue \ "type").as[String]
       val cls = TYPE_MAP(opcode)
       val data = (jsValue \ "data").as[JsValue]
       val ctor = cls.getConstructor (classOf[JsValue])

@@ -10,7 +10,7 @@ GET     /count                          controllers.CountController.count
 GET     /message                        controllers.AsyncController.message
 
 GET     /vestibule/index                controllers.VestibuleController.index
-GET     /games/start/*meId/*himId       controllers.VestibuleController.start(meId: Int, himId: Int)
+GET     /games/start/:meId/:himId       controllers.VestibuleController.start(meId: Int, himId: Int)
 
 GET     /vestibule/socket               controllers.VestibuleController.socket
 

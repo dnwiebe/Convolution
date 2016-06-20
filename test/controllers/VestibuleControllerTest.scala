@@ -46,7 +46,7 @@ class VestibuleControllerTest extends path.FunSpec {
       }
 
       it ("informs game service of entry") {
-        verify (gameService).gameEnter (bill, ted)
+        verify (gameService).gamePrepare (bill, ted)
       }
     }
   }
