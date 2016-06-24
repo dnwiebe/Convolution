@@ -4,7 +4,8 @@ import javax.inject._
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import services.{GameService, VestibuleService}
+import play.api.libs.streams.ActorFlow
+import services.{GameService, Representative, VestibuleService}
 import play.api.mvc._
 
 /**
@@ -12,14 +13,12 @@ import play.api.mvc._
  * application's home page.
  */
 
-/// Spike
 @Singleton
 class GameScreenController @Inject
     (vestibuleService: VestibuleService, gameService: GameService)
     (implicit system: ActorSystem, materializer: Materializer) extends Controller {
 
-  def start (challenger: Int, victim: Int) = Action {
-    Ok
+  def socket (mePlayerId: Int, himPlayerId: Int) = WebSocket.accept[String, String] { request =>
+    ActorFlow.actorRef(out => Representative.props(out, vestibuleService, gameService))
   }
 }
-/// Spike

@@ -103,7 +103,7 @@ class GameService (implicit val system: ActorSystem) {
     private def gameAccept (mePlayerId: Int): Unit = {
       incipientGames.remove (mePlayerId) match {
         case None => {
-          println (s"Player with id ${mePlayerId} failed to accept nonexistent game - ignoring")
+          println (s"Player with id ${mePlayerId} failed to reject nonexistent game - ignoring")
         }
         case Some (game) => {
           gamesInProgress (game.horizontal.id) = game

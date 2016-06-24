@@ -26,11 +26,11 @@ class VestibuleController @Inject()
     Ok (views.html.vestibule (wsUrl))
   }
 
-  def socket = WebSocket.accept[String, String] { request =>
-    ActorFlow.actorRef(out => Representative.props(out, vestibuleService))
+  def socket = WebSocket.accept[String, String] { implicit request =>
+    ActorFlow.actorRef(out => Representative.props(out, vestibuleService, gameService))
   }
 
-  def start (meId: Int, himId: Int) = Action.async {
+  def start (meId: Int, himId: Int) = Action.async { implicit request =>
     vestibuleService.playerChallenge (meId, himId).map { optPair =>
 println (s"Challenge: $optPair")
       val (mePlayer, himPlayer) = optPair match {
@@ -38,7 +38,9 @@ println (s"Challenge: $optPair")
         case _ => throw new UnsupportedOperationException ("Test-drive me")
       }
       gameService.gamePrepare (mePlayer, himPlayer)
-      Ok (views.html.gamescreen (mePlayer, himPlayer))
+      val httpUrl = routes.GameScreenController.socket(mePlayer.id, himPlayer.id).absoluteURL()
+      val wsUrl = httpToWs (httpUrl)
+      Ok (views.html.gamescreen (mePlayer, himPlayer, wsUrl))
     }
   }
 

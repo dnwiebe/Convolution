@@ -127,7 +127,8 @@ class RepresentativeTest extends path.FunSpec {
   describe ("A VestibuleActor with a mocked out-actor and a mocked VestibuleService") {
     val out = TestProbe ()
     val vestibuleService = mock (classOf[VestibuleService])
-    val subject = Representative (out.ref, vestibuleService) (system)
+    val gameService = mock (classOf[GameService])
+    val subject = Representative (out.ref, vestibuleService, gameService) (system)
 
     describe ("sent an EnterVestibule message from Petey") {
 

@@ -30,6 +30,7 @@ class VestibuleControllerTest extends path.FunSpec {
 
       it ("shows the proper page") {
         assert (html.contains ("Enter your name"))
+        assert (html.contains ("<script>Vestibule ('ws:///vestibule/socket');</script>"))
       }
     }
 
@@ -43,6 +44,7 @@ class VestibuleControllerTest extends path.FunSpec {
 
       it ("shows the proper page") {
         assert (html.contains ("Waiting for opponent Ted"))
+        assert (html.contains ("<script>GameScreen (123, 234, 'ws:///games/socket/123/234');</script>"))
       }
 
       it ("informs game service of entry") {

@@ -8,16 +8,17 @@ import play.api.libs.json._
   */
 
 object Representative {
-  def apply (out: ActorRef, vestibuleService: VestibuleService)(implicit system: ActorSystem): ActorRef = {
-    system.actorOf (props (out, vestibuleService))
+  def apply (out: ActorRef, vestibuleService: VestibuleService, gameService: GameService)
+            (implicit system: ActorSystem): ActorRef = {
+    system.actorOf (props (out, vestibuleService, gameService))
   }
 
-  def props (out: ActorRef, vestibuleService: VestibuleService) = {
-    Props (classOf[Representative], out, vestibuleService)
+  def props (out: ActorRef, vestibuleService: VestibuleService, gameService: GameService) = {
+    Props (classOf[Representative], out, vestibuleService, gameService)
   }
 }
 
-class Representative (out: ActorRef, vestibuleService: VestibuleService) extends Actor {
+class Representative (out: ActorRef, vestibuleService: VestibuleService, gameService: GameService) extends Actor {
 
   def receive = {
     case json: String => handleIncomingMessage (json)
