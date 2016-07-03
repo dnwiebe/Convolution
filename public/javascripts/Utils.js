@@ -59,5 +59,9 @@ console.log ("Sending message: " + msg + "\n");
         return ws;
     };
 
+    self.navigateTo = function (url) {
+        window.location = url;
+    };
+
     return self;
 } ();

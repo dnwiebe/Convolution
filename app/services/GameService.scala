@@ -18,10 +18,13 @@ case class RejectGame (player: DisplayPlayer) extends Outgoing ("rejectGame") wi
   def toJsValue = toJsValue (player)
 }
 
-case class StartGame (board: ConvolutionBoard, isHorizontal: Boolean, opponent: DisplayPlayer)
+case class StartGame (board: ConvolutionBoard, isHorizontal: Boolean, player: DisplayPlayer, opponent: DisplayPlayer)
     extends Outgoing ("startGame") with BoardMessage with PlayerMessage {
   def toJsValue = JsObject (Seq (
-    "board" -> toJsValue (board), "isHorizontal" -> JsBoolean (isHorizontal), "opponent" -> toJsValue (opponent)
+    "board" -> toJsValue (board),
+    "isHorizontal" -> JsBoolean (isHorizontal),
+    "player" -> toJsValue (player),
+    "opponent" -> toJsValue (opponent)
   ))
 }
 
@@ -108,8 +111,8 @@ class GameService (implicit val system: ActorSystem) {
         case Some (game) => {
           gamesInProgress (game.horizontal.id) = game
           gamesInProgress (game.vertical.id) = game
-          game.horizontal.representative ! StartGame (game.board, true, game.vertical)
-          game.vertical.representative ! StartGame (game.board, false, game.horizontal)
+          game.horizontal.representative ! StartGame (game.board, true, game.horizontal, game.vertical)
+          game.vertical.representative ! StartGame (game.board, false, game.vertical, game.horizontal)
         }
       }
     }

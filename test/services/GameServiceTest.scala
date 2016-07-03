@@ -42,10 +42,14 @@ class GameServiceTest extends path.FunSpec with PlayerMessage with BoardMessage 
 
           it ("where the me player is horizontal") {
             assert (meMessage.isHorizontal === true)
+            assert (meMessage.player === me)
+            assert (meMessage.opponent === him)
           }
 
           it ("where the him player is vertical") {
             assert (himMessage.isHorizontal === false)
+            assert (himMessage.player === him)
+            assert (himMessage.opponent === me)
           }
 
           it ("where the same game board is given to each player") {
@@ -218,14 +222,16 @@ class GameServiceTest extends path.FunSpec with PlayerMessage with BoardMessage 
 
   describe ("A StartGame message, converted to a JsValue") {
     val player = DisplayPlayer (321, "Mikey", 4321, null)
+    val opponent = DisplayPlayer (432, "Hilda", 5432, null)
     val board = ConvolutionBoard (8).build
-    val result = StartGame (board, true, player).toJsValue
+    val result = StartGame (board, true, player, opponent).toJsValue
 
     it ("produces the proper structure") {
       assert (result.toString === JsObject (Seq (
         "board" -> toJsValue (board),
         "isHorizontal" -> JsBoolean (true),
-        "opponent" -> toJsValue (player)
+        "player" -> toJsValue (player),
+        "opponent" -> toJsValue (opponent)
       )).toString)
     }
   }
