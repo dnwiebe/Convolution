@@ -213,7 +213,7 @@ describe ('Given a fake HTML page', function () {
                                 });
                             });
 
-                            describe ('when a good message is received and accepted', function () {
+                            describe ('when a good message is received and rejected', function () {
 
                                 beforeEach (function () {
                                     spyOn (window, 'confirm').and.returnValue (false);
@@ -223,6 +223,10 @@ describe ('Given a fake HTML page', function () {
 
                                 it ('does not navigate away to game', function () {
                                     expect (subject.navigate).not.toHaveBeenCalled ();
+                                });
+
+                                it ('sends a rejection message', function () {
+                                    expect (websocket.send).toHaveBeenCalledWith ('rejectGame', {playerId: 123})
                                 });
                             });
                         });

@@ -3,6 +3,8 @@ package services
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import play.api.libs.json._
 
+import scala.util.{Failure, Success}
+
 /**
   * Created by dnwiebe on 6/5/16.
   */
@@ -31,8 +33,9 @@ println (s"Incoming message: $json")
     val jsValue = Json.parse (json)
     val message = Incoming (jsValue)
     message match {
-      case None => throw new UnsupportedOperationException ("Test-drive me")
-      case Some (EnterVestibule (name)) => handleEnterVestibule (name)
+      case Failure (e) => throw e
+      case Success (EnterVestibule (name)) => handleEnterVestibule (name)
+      case Success (RejectGame (playerId)) => handleRejectGame (playerId)
     }
   }
 
@@ -44,5 +47,9 @@ println (s"Outgoing message: $json")
 
   private def handleEnterVestibule (name: String): Unit = {
     vestibuleService.playerEntered (name, self)
+  }
+
+  private def handleRejectGame (playerId: Int): Unit = {
+    gameService.gameReject (playerId)
   }
 }

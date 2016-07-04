@@ -17,6 +17,7 @@ Utils = function () {
         var socket = self.makeWebSocket (url);
 
         var onMessage = function (event) {
+console.log ("Received message: " + event.data + "\n");
             var msg = null;
             try {
                 msg = JSON.parse (event.data);

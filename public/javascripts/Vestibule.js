@@ -43,6 +43,9 @@ var Vestibule = function (webSocketUrl) {
         if (window.confirm (player.name + ' has challenged you to a game of Convolution.')) {
             self.navigate('/games/start/' + self.player.id + '/' + player.id);
         }
+        else {
+            self.websocket.send ('rejectGame', {playerId: player.id});
+        }
     };
 
     var makeWebSocket = function (opcode, data) {

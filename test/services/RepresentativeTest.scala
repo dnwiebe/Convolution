@@ -5,8 +5,10 @@ import play.api.libs.json._
 
 import scala.concurrent.duration._
 import akka.actor._
-import akka.testkit.TestProbe
+import akka.testkit.{TestActorRef, TestProbe}
 import org.mockito.Mockito._
+
+import scala.util.{Failure, Success}
 
 /**
   * Created by dnwiebe on 6/10/16.
@@ -96,10 +98,10 @@ class EnterVestibuleTest extends path.FunSpec {
     )
 
     describe ("converted to a message") {
-      val result = Incoming (classOf[EnterVestibule], jsValue)
+      val result = Incoming (jsValue)
 
       it ("comes out as expected") {
-        assert (result === Some (EnterVestibule ("Chubs")))
+        assert (result === Success (EnterVestibule ("Chubs")))
       }
     }
   }
@@ -113,10 +115,30 @@ class EnterVestibuleTest extends path.FunSpec {
     )
 
     describe ("converted to a message") {
+      val result = Incoming (jsValue).asInstanceOf[Failure[Incoming]]
+
+      it ("returns the correct failure") {
+        val e = result.exception.asInstanceOf [NoSuchElementException]
+        assert (e.getMessage === "key not found: nonexistent")
+      }
+    }
+  }
+}
+
+class RejectGameTest extends path.FunSpec {
+  describe ("Good JSON for a RejectGame message") {
+    val jsValue = Json.obj (
+      "type" -> "rejectGame",
+      "data" -> Json.obj (
+        "playerId" -> JsNumber (123)
+      )
+    )
+
+    describe ("converted to a message") {
       val result = Incoming (jsValue)
 
-      it ("becomes None") {
-        assert (result === None)
+      it ("comes out as expected") {
+        assert (result === Success (RejectGame (123)))
       }
     }
   }
@@ -128,7 +150,7 @@ class RepresentativeTest extends path.FunSpec {
     val out = TestProbe ()
     val vestibuleService = mock (classOf[VestibuleService])
     val gameService = mock (classOf[GameService])
-    val subject = Representative (out.ref, vestibuleService, gameService) (system)
+    val subject = TestActorRef (new Representative (out.ref, vestibuleService, gameService))
 
     describe ("sent an EnterVestibule message from Petey") {
 
@@ -136,6 +158,15 @@ class RepresentativeTest extends path.FunSpec {
 
       it ("calls the service") {
         verify (vestibuleService).playerEntered ("Petey", subject)
+      }
+    }
+
+    describe ("sent a RejectGame message about player 234") {
+
+      subject ! makeRejectGameString (234)
+
+      it ("calls the service") {
+        verify (gameService).gameReject (234)
       }
     }
 
@@ -159,6 +190,16 @@ class RepresentativeTest extends path.FunSpec {
       "type" -> "enterVestibule",
       "data" -> Json.obj (
         "name" -> name
+      )
+    )
+    jsValue.toString ()
+  }
+
+  private def makeRejectGameString (playerId: Int): String = {
+    val jsValue = Json.obj (
+      "type" -> "rejectGame",
+      "data" -> Json.obj (
+        "playerId" -> playerId
       )
     )
     jsValue.toString ()

@@ -3,7 +3,7 @@ package services
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.google.inject.Singleton
+import com.google.inject.{Inject, Singleton}
 import models.ConvolutionBoard
 import play.api.libs.json.{JsBoolean, JsObject}
 
@@ -14,7 +14,7 @@ import scala.concurrent.duration._
   * Created by dnwiebe on 6/3/16.
   */
 
-case class RejectGame (player: DisplayPlayer) extends Outgoing ("rejectGame") with PlayerMessage {
+case class GameRejected (player: DisplayPlayer) extends Outgoing ("rejectGame") with PlayerMessage { // TODO: change name
   def toJsValue = toJsValue (player)
 }
 
@@ -35,7 +35,7 @@ case class Turn (board: ConvolutionBoard, yourTurn: Boolean) extends Outgoing ("
 }
 
 @Singleton
-class GameService (implicit val system: ActorSystem) {
+class GameService @Inject () (implicit val system: ActorSystem) {
   case class Game (horizontal: DisplayPlayer, vertical: DisplayPlayer, var board: ConvolutionBoard)
   var boardFactory: () => ConvolutionBoard = {() => ConvolutionBoard (8).randomize ().build}
   val actorRef = GameServiceActor (this)
@@ -90,6 +90,7 @@ class GameService (implicit val system: ActorSystem) {
     private def gamePrepare (mePlayer: DisplayPlayer, himPlayer: DisplayPlayer): Unit = {
       val game = Game (mePlayer, himPlayer, boardFactory ())
       incipientGames(himPlayer.id) = game
+      himPlayer.representative ! Challenge (mePlayer)
     }
 
     private def gameReject (himPlayerId: Int): Unit = {
@@ -98,7 +99,7 @@ class GameService (implicit val system: ActorSystem) {
           println (s"Player with id ${himPlayerId} failed to reject nonexistent game - ignoring")
         }
         case Some (game) => {
-          game.horizontal.representative ! RejectGame (game.vertical)
+          game.horizontal.representative ! GameRejected (game.vertical)
         }
       }
     }

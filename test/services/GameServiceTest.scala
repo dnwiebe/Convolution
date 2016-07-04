@@ -33,125 +33,133 @@ class GameServiceTest extends path.FunSpec with PlayerMessage with BoardMessage 
         assert (meGameOpt eq himGameOpt)
       }
 
-      describe ("and the game is accepted by the him player") {
-        subject.gameAccept (him.id)
+      describe ("and the message sent to the him player") {
+        val himMessage = himRep.receiveOne (1 seconds).asInstanceOf [Challenge]
 
-        describe ("hands out a message to each player") {
-          val meMessage = meRep.receiveOne (1 seconds).asInstanceOf [StartGame]
-          val himMessage = himRep.receiveOne (1 seconds).asInstanceOf [StartGame]
+        it ("is a properly constituted challenge") {
+          assert (himMessage.challenger eq me)
+        }
 
-          it ("where the me player is horizontal") {
-            assert (meMessage.isHorizontal === true)
-            assert (meMessage.player === me)
-            assert (meMessage.opponent === him)
-          }
+        describe ("and the game is accepted by the him player") {
+          subject.gameAccept (him.id)
 
-          it ("where the him player is vertical") {
-            assert (himMessage.isHorizontal === false)
-            assert (himMessage.player === him)
-            assert (himMessage.opponent === me)
-          }
+          describe ("hands out a message to each player") {
+            val meMessage = meRep.receiveOne (1 seconds).asInstanceOf [StartGame]
+            val himMessage = himRep.receiveOne (1 seconds).asInstanceOf [StartGame]
 
-          it ("where the same game board is given to each player") {
-            assert (meMessage.board eq himMessage.board)
-          }
+            it ("where the me player is horizontal") {
+              assert (meMessage.isHorizontal === true)
+              assert (meMessage.player === me)
+              assert (meMessage.opponent === him)
+            }
 
-          describe ("and a horizontal move comes in from the me player") {
-            subject.acceptMove (123, 7)
+            it ("where the him player is vertical") {
+              assert (himMessage.isHorizontal === false)
+              assert (himMessage.player === him)
+              assert (himMessage.opponent === me)
+            }
 
-            describe ("hands out Turn messages") {
-              val meMessage = meRep.receiveOne (1 seconds).asInstanceOf [Turn]
-              val himMessage = himRep.receiveOne (1 seconds).asInstanceOf [Turn]
+            it ("where the same game board is given to each player") {
+              assert (meMessage.board eq himMessage.board)
+            }
 
-              it ("where the same (properly modified) board is sent to both players") {
-                val board = meMessage.board
-                assert (board.valueAt (7, 0) === None)
-                assert (himMessage.board eq board)
-              }
+            describe ("and a horizontal move comes in from the me player") {
+              subject.acceptMove (123, 7)
 
-              it ("where it is now the him player's turn") {
-                assert (meMessage.yourTurn === false)
-                assert (himMessage.yourTurn === true)
-              }
+              describe ("hands out Turn messages") {
+                val meMessage = meRep.receiveOne (1 seconds).asInstanceOf [Turn]
+                val himMessage = himRep.receiveOne (1 seconds).asInstanceOf [Turn]
 
-              describe ("and a vertical move comes in from the him player") {
-                subject.acceptMove (234, 7)
+                it ("where the same (properly modified) board is sent to both players") {
+                  val board = meMessage.board
+                  assert (board.valueAt (7, 0) === None)
+                  assert (himMessage.board eq board)
+                }
 
-                describe ("hands out Turn messages") {
-                  val meMessage = meRep.receiveOne (1 seconds).asInstanceOf [Turn]
-                  val himMessage = himRep.receiveOne (1 seconds).asInstanceOf [Turn]
+                it ("where it is now the him player's turn") {
+                  assert (meMessage.yourTurn === false)
+                  assert (himMessage.yourTurn === true)
+                }
 
-                  it ("where the same (properly modified) board is sent to both players") {
-                    val board = meMessage.board
-                    assert (board.valueAt (7, 7) === None)
-                    assert (himMessage.board eq board)
+                describe ("and a vertical move comes in from the him player") {
+                  subject.acceptMove (234, 7)
+
+                  describe ("hands out Turn messages") {
+                    val meMessage = meRep.receiveOne (1 seconds).asInstanceOf [Turn]
+                    val himMessage = himRep.receiveOne (1 seconds).asInstanceOf [Turn]
+
+                    it ("where the same (properly modified) board is sent to both players") {
+                      val board = meMessage.board
+                      assert (board.valueAt (7, 7) === None)
+                      assert (himMessage.board eq board)
+                    }
+
+                    it ("where it is now the me player's turn") {
+                      assert (meMessage.yourTurn === true)
+                      assert (himMessage.yourTurn === false)
+                    }
                   }
+                }
 
-                  it ("where it is now the me player's turn") {
-                    assert (meMessage.yourTurn === true)
-                    assert (himMessage.yourTurn === false)
+                describe ("and a move from the horizontal player comes in at the wrong time") {
+                  subject.acceptMove (123, 7)
+
+                  it ("returns no messages") {
+                    meRep.expectNoMsg (100 millis)
+                    himRep.expectNoMsg (100 millis)
                   }
                 }
               }
+            }
 
-              describe ("and a move from the horizontal player comes in at the wrong time") {
-                subject.acceptMove (123, 7)
+            describe ("and a move from the vertical player comes in at the wrong time") {
+              subject.acceptMove (234, 7)
 
-                it ("returns no messages") {
-                  meRep.expectNoMsg (100 millis)
-                  himRep.expectNoMsg (100 millis)
-                }
+              it ("returns no messages") {
+                meRep.expectNoMsg (100 millis)
+                himRep.expectNoMsg (100 millis)
+              }
+            }
+
+            describe ("and a move comes in from a player not known to be playing any games") {
+              subject.acceptMove (-1, 7)
+
+              it ("returns no messages") {
+                meRep.expectNoMsg (100 millis)
+                himRep.expectNoMsg (100 millis)
               }
             }
           }
+        }
 
-          describe ("and a move from the vertical player comes in at the wrong time") {
-            subject.acceptMove (234, 7)
+        describe ("and the game is rejected by the him player") {
+          subject.gameReject (him.id)
 
-            it ("returns no messages") {
-              meRep.expectNoMsg (100 millis)
-              himRep.expectNoMsg (100 millis)
+          describe ("sends a rejected message to the me player") {
+            val meMessage = meRep.receiveOne (1 seconds).asInstanceOf [GameRejected]
+
+            it ("where the player is the him player") {
+              assert (meMessage.player === him)
             }
-          }
 
-          describe ("and a move comes in from a player not known to be playing any games") {
-            subject.acceptMove (-1, 7)
+            describe ("and then accepted by the me player") {
+              subject.gameAccept (me.id)
 
-            it ("returns no messages") {
-              meRep.expectNoMsg (100 millis)
-              himRep.expectNoMsg (100 millis)
+              it ("returns no messages") {
+                meRep.expectNoMsg (100 millis)
+                himRep.expectNoMsg (100 millis)
+              }
             }
           }
         }
-      }
 
-      describe ("and the game is rejected by the him player") {
-        subject.gameReject (him.id)
+        describe ("and the game is rejected by the me player") {
+          subject.gameReject (me.id)
 
-        describe ("sends a rejected message to the me player") {
-          val meMessage = meRep.receiveOne (1 seconds).asInstanceOf[RejectGame]
-
-          it ("where the player is the him player") {
-            assert (meMessage.player === him)
+          it ("returns no messages") {
+            meRep.expectNoMsg (100 millis)
+            himRep.expectNoMsg (100 millis)
           }
-
-          describe ("and then accepted by the me player") {
-            subject.gameAccept (me.id)
-
-            it ("returns no messages") {
-              meRep.expectNoMsg (100 millis)
-              himRep.expectNoMsg (100 millis)
-            }
-          }
-        }
-      }
-
-      describe ("and the game is rejected by the me player") {
-        subject.gameReject (me.id)
-
-        it ("returns no messages") {
-          meRep.expectNoMsg (100 millis)
-          himRep.expectNoMsg (100 millis)
         }
       }
     }
@@ -164,6 +172,7 @@ class GameServiceTest extends path.FunSpec with PlayerMessage with BoardMessage 
       val himRep = TestProbe ()
       val him = DisplayPlayer (234, "Teddy", 2345L, himRep.ref)
       subject.gamePrepare (me, him)
+      himRep.receiveOne (1 seconds) // throw away Challenge
       subject.gameAccept (him.id)
       meRep.receiveOne (1 seconds) // throw away StartGame
       himRep.receiveOne (1 seconds) // throw away StartGame
@@ -211,9 +220,9 @@ class GameServiceTest extends path.FunSpec with PlayerMessage with BoardMessage 
     system.terminate ()
   }
 
-  describe ("A RejectGame message, converted to a JsValue") {
+  describe ("A GameRejected message, converted to a JsValue") {
     val player = DisplayPlayer (321, "Mikey", 4321, null)
-    val result = RejectGame (player).toJsValue
+    val result = GameRejected (player).toJsValue
 
     it ("produces the proper structure") {
       assert (result.toString () === toJsValue (player).toString ())

@@ -32,7 +32,6 @@ class VestibuleController @Inject()
 
   def start (meId: Int, himId: Int) = Action.async { implicit request =>
     vestibuleService.playerChallenge (meId, himId).map { optPair =>
-println (s"Challenge: $optPair")
       val (mePlayer, himPlayer) = optPair match {
         case (Some (m), Some (h)) => (m, h)
         case _ => throw new UnsupportedOperationException ("Test-drive me")
