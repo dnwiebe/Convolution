@@ -3,10 +3,10 @@ package controllers
 import javax.inject._
 
 import akka.actor.ActorSystem
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.stream.Materializer
-
-import services.{GameService, Representative, VestibuleService}
+import services.{DisplayPlayer, GameService, Representative, VestibuleService}
 import play.api.mvc._
 import play.api.libs.streams._
 
@@ -34,7 +34,7 @@ class VestibuleController @Inject()
     vestibuleService.playerChallenge (meId, himId).map { optPair =>
       val (mePlayer, himPlayer) = optPair match {
         case (Some (m), Some (h)) => (m, h)
-        case _ => throw new UnsupportedOperationException ("Test-drive me")
+        case _ => throw new UnsupportedOperationException (s"Me: $meId -> ${optPair._1}; Him: $himId -> ${optPair._2}")
       }
       gameService.gamePrepare (mePlayer, himPlayer)
       val httpUrl = routes.GameScreenController.socket(mePlayer.id, himPlayer.id).absoluteURL()

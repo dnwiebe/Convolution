@@ -7,6 +7,7 @@ import scala.concurrent.duration._
 import akka.actor._
 import akka.testkit.{TestActorRef, TestProbe}
 import org.mockito.Mockito._
+import services.VestibuleService.PlayerChallengeReq
 
 import scala.util.{Failure, Success}
 
@@ -165,8 +166,14 @@ class RepresentativeTest extends path.FunSpec {
 
       subject ! makeRejectGameString (234)
 
-      it ("calls the service") {
+      it ("informs the game service") {
         verify (gameService).gameReject (234)
+      }
+
+      it ("restores the player to the vestibule service") {
+//        val response = (actor ? PlayerChallengeReq (meId, himId)).mapTo[PlayerChallengeResp]
+//        response.map {r => (r.mePlayerOpt, r.himPlayerOpt)}
+        verify (vestibuleService).playerReentered ()
       }
     }
 

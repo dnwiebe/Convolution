@@ -15,10 +15,18 @@ import play.api.libs.concurrent.Execution.Implicits._
   */
 
 object VestibuleService {
+  private case class PlayerChallengeReq (meId: Int, himId: Int)
+  private case class PlayerChallengeResp (mePlayerOpt: Option[DisplayPlayer], himPlayerOpt: Option[DisplayPlayer])
+  private case class WaitingPlayersReq ()
+  private case class WaitingPlayersResp (players: List[DisplayPlayer])
+  private case class PlayerEnteredReq (name: String, representative: ActorRef)
+  private case class PlayerLeftReq (id: Int)
 }
 
 @Singleton
 class VestibuleService @Inject() (implicit system: ActorSystem) {
+  import VestibuleService._
+
   private implicit val timeout: akka.util.Timeout = 1 seconds
   private val actor = VestibuleActor (this)
   var clock: () => Long = {() => System.currentTimeMillis ()}
@@ -41,12 +49,9 @@ class VestibuleService @Inject() (implicit system: ActorSystem) {
     actor ! PlayerLeftReq (id)
   }
 
-  private case class PlayerChallengeReq (meId: Int, himId: Int)
-  private case class PlayerChallengeResp (mePlayerOpt: Option[DisplayPlayer], himPlayerOpt: Option[DisplayPlayer])
-  private case class WaitingPlayersReq ()
-  private case class WaitingPlayersResp (players: List[DisplayPlayer])
-  private case class PlayerEnteredReq (name: String, representative: ActorRef)
-  private case class PlayerLeftReq (id: Int)
+  def playerReentered (): Unit = {
+    throw new UnsupportedOperationException ("Test-drive me!")
+  }
 
   object VestibuleActor {
     def apply (service: VestibuleService)(implicit system: ActorSystem): ActorRef = {
@@ -70,7 +75,7 @@ class VestibuleService @Inject() (implicit system: ActorSystem) {
     private def playerChallenge (meId: Int, himId: Int): Unit = {
       val mePlayerOpt = players.find {p => p.id == meId}
       val himPlayerOpt = players.find {p => p.id == himId}
-      if (mePlayerOpt.isDefined) {removePlayerById (mePlayerOpt.get.id)}
+//      if (mePlayerOpt.isDefined) {removePlayerById (mePlayerOpt.get.id)}
       sender ! PlayerChallengeResp (mePlayerOpt, himPlayerOpt)
     }
 
